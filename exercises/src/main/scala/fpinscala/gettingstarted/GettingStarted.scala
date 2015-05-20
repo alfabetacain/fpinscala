@@ -146,7 +146,13 @@ object PolymorphicFunctions {
 
   // Exercise 2: Implement a polymorphic function to check whether
   // an `Array[A]` is sorted
-  def isSorted[A](as: Array[A], gt: (A,A) => Boolean): Boolean = ???
+  def isSorted[A](as: Array[A], gt: (A,A) => Boolean): Boolean = {
+    def helper(count: Int, as: Array[A], gt: (A,A) => Boolean): Boolean = {
+      if (count >= as.Length-1) true
+      else if (!gt(as[count+1],as[count])) false
+      else helper(count+1,as,gt)
+    }
+  } //???
 
   // Polymorphic functions are often so constrained by their type
   // that they only have one implementation! Here's an example:
@@ -159,7 +165,8 @@ object PolymorphicFunctions {
   // Note that `=>` associates to the right, so we could
   // write the return type as `A => B => C`
   def curry[A,B,C](f: (A, B) => C): A => (B => C) =
-    ???
+    (a: A) => (b: B) => f(a,b)
+    //???
 
   // NB: The `Function2` trait has a `curried` method already
 
