@@ -62,5 +62,55 @@ class OptionTest extends FlatSpec {
     val result = (Some(2)).filter(_ => false)
     assert(None == result)
   }
-}
 
+  "Function variance" should "function with basic example" in {
+    val s = Seq(2.0,4.0)
+    val realVariance = Some(1.0)
+    val result = Option.variance(s)
+    assert(realVariance == result)
+  }
+
+  it should "fail if not able to get the mean" in {
+    val s = Seq()
+    assert(None == Option.variance(s))
+  }
+
+  "Function map2" should "use the two arguments if they are both some" in {
+    val val1 = Some("Hello ")
+    val val2 = Some("World")
+    assert(Some("Hello World") == Option.map2(val1,val2)((v1,v2) => v1 + v2))
+  }
+
+  it should "not run if second one is None" in {
+    val val1 = Some("Hello ")
+    assert(None == Option.map2(val1,None)((v1,v2) => v1 + v2))
+  }
+
+  it should "not run if the first one is None" in {
+    val val2 = Some("World")
+    assert(None == Option.map2(None,val2)((v1: String,v2: String) => v1 + v2))
+  }
+
+  it should "not run if both are None" in {
+    assert(None == Option.map2(None,None)((v1: String,v2: String) => v1 + v2))
+  }
+
+  "Function sequence" should "return the values of a non empty list of some values" in {
+    val l = List(Some(1),Some(2))
+    val expected = Some(List(1,2))
+    val actual = Option.sequence(l)
+    assert(expected == actual)
+  }
+
+  it should "return none if even a single element is none" in {
+    val l = List(Some(1),None)
+    val actual = Option.sequence(l)
+    assert(None == actual)
+  }
+
+  it should "return some empty list if given an empty list" in {
+    val l = List.empty : List[Option[Int]]
+    val actual = Option.sequence(l)
+    assert(Some(l) == actual)
+  }
+}

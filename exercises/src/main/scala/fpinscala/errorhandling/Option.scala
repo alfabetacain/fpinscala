@@ -1,6 +1,5 @@
 package fpinscala.errorhandling
 
-
 import scala.{Option => _, Some => _, Either => _, _} // hide std library `Option`, `Some` and `Either`, since we are writing our own in this chapter
 
 sealed trait Option[+A] {
@@ -53,11 +52,30 @@ object Option {
   def mean(xs: Seq[Double]): Option[Double] =
     if (xs.isEmpty) None
     else Some(xs.sum / xs.length)
-  def variance(xs: Seq[Double]): Option[Double] = sys.error("todo")
 
-  def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = sys.error("todo")
+  def variance(xs: Seq[Double]): Option[Double] = {
+    mean(xs).map(m => (xs.map(elem => math.pow(elem - m,2)))).flatMap(l => mean(l))
+  }
 
-  def sequence[A](a: List[Option[A]]): Option[List[A]] = sys.error("todo")
+  def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] = {
+    a.flatMap(val1 => b.map(val2 => f(val1,val2)))
+  }
 
-  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = sys.error("todo")
+  def sequence[A](a: List[Option[A]]): Option[List[A]] = {
+    traverse(a)(x => x)
+  }
+
+  def traverse[A, B](a: List[A])(f: A => Option[B]): Option[List[B]] = {
+    def go[A,B](a: List[A], acc: List[B])(f: A => Option[B]): Option[List[B]] = {
+      a match {
+        case item :: tail => 
+          (f(item)) match {
+            case Some(value) => go(tail,value::acc)(f)
+            case None => None
+          }
+        case Nil => Some(acc.reverse)
+      }
+    }
+    go(a,Nil)(f)
+  }
 }
