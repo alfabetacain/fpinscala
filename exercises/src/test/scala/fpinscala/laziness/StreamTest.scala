@@ -145,4 +145,10 @@ class StreamTest extends FlatSpec {
     val actual = s.take(3).toList
     assert(List(0,1,1) == actual)
   }
+
+  "startsWith" should "return true if first starts with second" in {
+    val first = Stream(1,2,3)
+    val second = Stream(1,2)
+    assert(true == first.startsWith(second))
+  }
 }

@@ -87,7 +87,18 @@ trait Stream[+A] {
   def flatMap[B](f: A => Stream[B]): Stream[B] = 
     foldRight(empty[B])((a,b) => f(a) append(b))
 
-  def startsWith[B](s: Stream[B]): Boolean = sys.error("todo")
+  def startsWith[B](s: Stream[B]): Boolean = {
+    zipAll(s).takeWhile(_._2.isEmpty) forAll {
+      case (h,hh) => h == hh
+    }
+  }
+
+  def tails: Stream[Stream[A]] = {
+    unfold(this) {
+      case Empty => None
+      case s => Some(s, s drop 1)
+    } append Stream(empty)
+  }
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]

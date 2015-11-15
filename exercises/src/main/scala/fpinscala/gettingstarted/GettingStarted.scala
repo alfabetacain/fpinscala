@@ -37,7 +37,7 @@ object MyModule {
   // Exercise 1: Write a function to compute the nth fibonacci number
 
   def fib(n: Int): Int = {
-    def helper(count,first,second) {
+    def helper(count: Int,first: Int,second: Int): Int = {
       if (count <= 1) first
       else helper(count-1,second, first+second)
     }
@@ -148,10 +148,11 @@ object PolymorphicFunctions {
   // an `Array[A]` is sorted
   def isSorted[A](as: Array[A], gt: (A,A) => Boolean): Boolean = {
     def helper(count: Int, as: Array[A], gt: (A,A) => Boolean): Boolean = {
-      if (count >= as.Length-1) true
-      else if (!gt(as[count+1],as[count])) false
+      if (count >= as.length-1) true
+      else if (!gt(as(count+1),as(count))) false
       else helper(count+1,as,gt)
     }
+    helper(0, as, gt)
   } //???
 
   // Polymorphic functions are often so constrained by their type
