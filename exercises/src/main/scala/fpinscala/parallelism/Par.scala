@@ -19,7 +19,6 @@ object Par {
   private case class Map2Future[A,B,C](aPar: Future[A], bPar: Future[B])(f: (A,B) => C) extends Future[C] {
     var cache: Option[C] = None
     def get = cache.get
-    var cancelled = aPar.isCancelled || bPar.isCancelled
     def isDone = cache.isDefined
     def get(timeout: Long, units: TimeUnit) = {
       val msUnit = TimeUnit.MILLISECONDS
@@ -32,7 +31,7 @@ object Par {
       cache = Some(f(a, b))
       cache.get
     }
-    def isCancelled = cancelled
+    def isCancelled = aPar.isCancelled || bPar.isCancelled
     def cancel(evenIfRunning: Boolean): Boolean = 
       aPar.cancel(evenIfRunning) || bPar.cancel(evenIfRunning)
   }
@@ -52,6 +51,41 @@ object Par {
     map2(pa, unit(()))((a,_) => f(a))
 
   def sortPar(parList: Par[List[Int]]) = map(parList)(_.sorted)
+
+  def sequence[A](ps: List[Par[A]]): Par[List[A]] = {
+    ps.foldRight(unit(List[A]()))((par, acc) => map2(par, acc)((v,ac) => v :: ac))
+  }
+
+  def lazyUnit[A](a: => A): Par[A] = fork(unit(a))
+
+  def asyncF[A,B](f: A => B): A => Par[B] = {
+    a => lazyUnit(f(a))
+  }
+
+  def parMap[A,B](ps: List[A])(f: A => B): Par[List[B]] = fork {
+    val fbs: List[Par[B]] = ps.map(asyncF(f))
+    sequence(fbs)
+  }
+
+  def parFilter[A](as: List[A])(f: A => Boolean): Par[List[A]] = {
+    val mapped = parMap(as){
+      a => 
+        if (f(a))
+          Some(a)
+        else
+          None
+    }
+    map(mapped){
+      ls =>
+        ls.foldRight(List[A]()){
+          (current, acc) =>
+            current match {
+              case Some(value) => value :: acc
+              case None => acc
+            }
+        }
+    }
+  }
 
   def equal[A](e: ExecutorService)(p: Par[A], p2: Par[A]): Boolean = 
     p(e).get == p2(e).get
@@ -82,5 +116,4 @@ object Examples {
       val (l,r) = ints.splitAt(ints.length/2) // Divide the sequence in half using the `splitAt` function.
       sum(l) + sum(r) // Recursively sum both halves and add the results together.
     }
-
 }
