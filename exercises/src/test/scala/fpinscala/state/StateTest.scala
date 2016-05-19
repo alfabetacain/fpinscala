@@ -50,4 +50,11 @@ class StateTest extends FlatSpec {
     val (res, _) = RNG.nonNegativeLessThan(10)(rng)
     assert(res < 10)
   }
+
+  "function sequence in State" should "not change the order of the random sequence when using unit RNG" in {
+    val first: State[Int, Int] = State.unit(1)
+    val second: State[Int, Int] = State.unit(2)
+    val (list, _) = State.sequence[Int, Int](List(first, second)).run(2)
+    assert(list == List(1, 2))
+  }
 }

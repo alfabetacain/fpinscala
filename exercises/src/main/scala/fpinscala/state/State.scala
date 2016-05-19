@@ -130,19 +130,24 @@ object RNG {
 
 case class State[S,+A](run: S => (A, S)) {
   def map[B](f: A => B): State[S, B] = 
-    flatMap(a => State.unit(f(a)))
+    this.flatMap(x => State.unit(f(x)))
 
   def map2[B,C](sb: State[S, B])(f: (A, B) => C): State[S, C] = 
-    flatMap(a => sb.flatMap(b => State.unit(f(a,b))))
-
+    this.flatMap{
+      a =>
+        sb.flatMap{
+          b =>
+            State.unit(f(a,b))
+        }
+    }
 
   def flatMap[B](f: A => State[S, B]): State[S, B] = {
-    State(s => {
-      val (a,s1) = run(s)
-      (f(a)).run(s1)
-    })
+    State{
+      state => 
+        val (res, state1) = this.run(state)
+        f(res).run(state1)
+    }
   }
-
 }
 
 sealed trait Input
@@ -152,15 +157,15 @@ case object Turn extends Input
 case class Machine(locked: Boolean, candies: Int, coins: Int)
 
 object State {
-  def unit[A,S](a: A): State[S,A] =
-    State(s => (a,s))
+  def unit[A,S](a: A): State[S,A] = 
+    State((a, _))
 
-  def sequence[A,S](fs: List[State[S,A]]): State[S,List[A]] = {
-    fs match {
-      case h :: t => h.map2(sequence(t))(_ :: _)
-      case Nil => State.unit(List())
-    }
+  def sequence[A,S](fs: List[State[S,A]]): State[S,List[A]] =  {
+    fs.foldLeft[State[S, List[A]]](State.unit(List.empty)){
+      (acc, elem) => elem.map2(acc)(_ :: _)
+    }.map(_.reverse)
   }
+
   def modify[S](f: S => S): State[S,Unit] = for {
     s <- get
     _ <- set(f(s))
