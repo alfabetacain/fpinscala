@@ -54,7 +54,16 @@ class StateTest extends FlatSpec {
   "function sequence in State" should "not change the order of the random sequence when using unit RNG" in {
     val first: State[Int, Int] = State.unit(1)
     val second: State[Int, Int] = State.unit(2)
-    val (list, _) = State.sequence[Int, Int](List(first, second)).run(2)
-    assert(list == List(1, 2))
+    val third: State[Int, Int] = State.unit(3)
+    val (list, _) = State.sequence[Int, Int](List(first, second, third)).run(7)
+    assert(list == List(1, 2, 3))
+  }
+
+  "simulateMachine" should "work according to book test case" in {
+    val inputs = List(Coin, Turn, Coin, Turn, Coin, Turn, Coin, Turn)
+    val machine = Machine(true, 5, 10)
+    val ((coins, candies), _) = State.simulateMachine(inputs).run(machine)
+    assert(coins == 14)
+    assert(candies == 1)
   }
 }
