@@ -161,9 +161,9 @@ object State {
     State((a, _))
 
   def sequence[A,S](fs: List[State[S,A]]): State[S,List[A]] =  {
-    fs.foldLeft[State[S, List[A]]](State.unit(List.empty)){
+    fs.reverse.foldLeft[State[S, List[A]]](State.unit(List.empty)){
       (acc, elem) => elem.map2(acc)(_ :: _)
-    }.map(_.reverse)
+    }
   }
 
   def modify[S](f: S => S): State[S,Unit] = for {
@@ -175,93 +175,32 @@ object State {
 
   def set[S](s: S): State[S,Unit] = State(_ => ((),s))
 
+  def log[A](x: A): A = {
+    println("Item: " + x)
+    x
+  }
 
   type Rand[A] = State[RNG, A]
   def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = {
-    sequence(inputs.map{
+    log(inputs)
+    State.sequence(inputs.map{
       input =>
-        println("input = " + input)
-        input match {
-          case Coin => 
-            modify{
-              (s: Machine) => 
-                println("Inserting coin into " + s)
+        modify{
+          s: Machine =>
+            input match {
+              case Coin =>
                 s match {
                   case Machine(true, candies, coins) if candies > 0 => Machine(false, candies, coins+1)
                   case s => s
                 }
-            }
-          case Turn => 
-            modify{
-              (s: Machine) =>
-                println("Turning knop on " + s)
-                s match {
-                  case Machine(false, candies, coins) if candies > 0 => Machine(true, candies-1, coins)
-                  case s => s
-                }
+                  case Turn =>
+                    s match {
+                      case Machine(false, candies, coins) if candies > 0 => Machine(true, candies-1, coins)
+                      case s => s
+                    }
             }
         }
     }).flatMap(_ => get).map(s => (s.coins, s.candies))
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /*rng => {
-      val (a,rng2) = f(rng)
-      g(a)(rng2)
-    }*/
-   /*
-    sequence(inputs.map(i => modify((s: Machine) => (i,s) match {
-      case (_, Machine(_,0,_)) => s
-      case (Coin,Machine(false,_,_)) => s
-      case (Turn, Machine(true,_,_)) => s
-      case (Coin, Machine(true,candy,coin)) => 
-        Machine(false,candy,coin+1)
-      case (Turn, Machine(false, candy, coin)) =>
-        Machine(true,candy-1,coin)
-    }))).flatMap(_ => get).map(s => (s.coins,s.candies))
-    //sequence(inputs.map(i => {
-     // modify((s: Machine) => 
-      //  (i,s) match {
-       //   case (Coin,Machine(false,candies,coins)) => Machine(true,candies,coins+1)
-        //  case (Turn,Machine(true,candies,coins)) => Machine(false,candies-1,coins)
-         // case (_,machine) => machine
-       // })
-     // }
-   // ))*/
