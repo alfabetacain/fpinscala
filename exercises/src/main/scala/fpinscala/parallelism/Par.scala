@@ -18,7 +18,15 @@ object Par {
 
   private case class Map2Future[A,B,C](aPar: Future[A], bPar: Future[B])(f: (A,B) => C) extends Future[C] {
     var cache: Option[C] = None
-    def get = cache.get
+    def get = cache match {
+      case None =>
+        if (aPar.isDone && bPar.isDone) {
+          cache = Some(f(aPar.get, bPar.get))
+          cache.get
+        } else
+          cache.get
+      case Some(value) => value
+    }
     def isDone = cache.isDefined
     def get(timeout: Long, units: TimeUnit) = {
       val msUnit = TimeUnit.MILLISECONDS
@@ -28,6 +36,7 @@ object Par {
       val stop = System.currentTimeMillis
       val timeRemaining = timeoutInMs - (stop - start)
       val b = bPar.get(timeRemaining, msUnit)
+      println("Applying function...")
       cache = Some(f(a, b))
       cache.get
     }

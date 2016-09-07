@@ -59,6 +59,13 @@ trait Stream[+A] {
       case _ => None
     }
 
+  def zipWith[B](s2: Stream[B]): Stream[(A,B)] = {
+    unfold((this, s2)) {
+      case (Cons(h1, t1), Cons(h2, t2)) => Some(((h1(), h2()), (t1(), t2())))
+      case _ => None
+    }
+  }
+
   def forAll(p: A => Boolean): Boolean = 
     foldRight(true)((a,b) => p(a) && b)
 
