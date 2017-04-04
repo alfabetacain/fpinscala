@@ -1,9 +1,7 @@
 package fpinscala.parsing
 
-import java.util.regex._
+import language.higherKinds
 import scala.util.matching.Regex
-import fpinscala.testing._
-import fpinscala.testing.Prop._
 
 trait JSON
 object JSON {
