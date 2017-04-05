@@ -13,3 +13,4 @@ project.vim
 
 *~
 *.class
+*.orig
